@@ -98,28 +98,22 @@ namespace HomeWebApp.Application.Services
 
         public async Task<ApiResponse<string>> ChangePassword(ChangePasswordRequest model)
         {
+           var userId= contextService.GetUserId();
+            var user=await repository.GetByIdAsync(userId);
 
-            var userId = contextService.GetUserId();
-          var user= await  repository.GetByIdAsync(userId);
+            if (user == null)
+                return ApiResponse<string>.ErrorResponse("Inavlid Credentials", StatusCode.BadRequest);
 
-            if (user is null) return ApiResponse<string>.ErrorResponse("User not found", StatusCode.NotFound);
+            if (!AppEncryption.ComparePassword(user.Password, model.NewPassword, user.Salt))
+                return ApiResponse<string>.ErrorResponse("Invalid Old Password", StatusCode.BadRequest);
 
+            user.Password=AppEncryption.CreatePasswordHash(model.NewPassword, user.Salt);
 
-            if (AppEncryption.HashPassword(model.OldPassowrd, user.Salt) != user.Password)
-                return ApiResponse<string>.ErrorResponse("Old password is incorrect", StatusCode.BadRequest);
+           int retval =await repository.UpdateAsync(user);
+            if (retval > 0)
+                return ApiResponse<string>.SuccesResponse(default, "Password Changed Successfully", StatusCode.Accepted);
 
-
-            user.Salt = AppEncryption.GenerateSalt();
-            user.Password = AppEncryption.HashPassword(model.NewPassword, user.Salt);
-
-
-            int returnValue = await repository.UpdateAsync(user);
-            if (returnValue > 0)
-                return ApiResponse<string>.SuccesResponse("Password Changed successfully", statusCode: StatusCode.OK);
-
-
-
-            return ApiResponse<string>.ErrorResponse("Something went wrong", StatusCode.InternalServerError);
+            return ApiResponse<string>.ErrorResponse("Can't update Something went wrong  ", StatusCode.BadGateway);
 
         }
 
