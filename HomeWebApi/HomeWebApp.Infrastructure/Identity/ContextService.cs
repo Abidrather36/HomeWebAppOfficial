@@ -35,5 +35,10 @@ namespace HomeWebApp.Infrastructure.Identity
 
             return usrName; 
         }
+        public string GetAppUrl()
+        {
+            var request=httpContextAccessor.HttpContext?.Request;
+            return request?.Scheme + "//" + request?.Host+"/" + "api/";
+        }
     }
 }

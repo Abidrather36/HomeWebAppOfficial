@@ -11,6 +11,7 @@ using HomeWebApp.Application.Utils;
 using HomeWebApp.Domain.Entities;
 using HomeWebApp.Domain.Enums;
 using Microsoft.AspNetCore.Http;
+using System.Net;
 using System.Net.Http;
 
 namespace HomeWebApp.Application.Services
@@ -53,9 +54,9 @@ namespace HomeWebApp.Application.Services
                 
             };
             user.Salt = AppEncryption.GenerateSalt();
-            user.Password = AppEncryption.HashPassword(model.Password, user.Salt);
+            user.Password = AppEncryption.CreatePasswordHash(model.Password, user.Salt);
 
-            user.ConfirmationCode = AppEncryption.GetRandomConfirmationCode();
+            /*user.ConfirmationCode = AppEncryption.GetRandomConfirmationCode();*/
             int retVal=await repository.InsertAsync(user);
             UserResponse userResponse = new UserResponse()
             {
@@ -104,7 +105,7 @@ namespace HomeWebApp.Application.Services
             if (user == null)
                 return ApiResponse<string>.ErrorResponse("Inavlid Credentials", StatusCode.BadRequest);
 
-            if (!AppEncryption.ComparePassword(user.Password, model.NewPassword, user.Salt))
+            if (!AppEncryption.ComparePassword(user.Password, model.OldPassowrd, user.Salt))
                 return ApiResponse<string>.ErrorResponse("Invalid Old Password", StatusCode.BadRequest);
 
             user.Password=AppEncryption.CreatePasswordHash(model.NewPassword, user.Salt);
@@ -189,6 +190,53 @@ namespace HomeWebApp.Application.Services
             //var client = httpContext.Request.Headers["clientUrl"];
             var clientRequest = httpContext.Request.Headers["Referer"];
             return $"{clientRequest}";
+        }
+
+        public async  Task<ApiResponse<string>> ForgetPassword(string email)
+        {
+            var user = (await repository.FindByAsync(x => x.Email == email)).FirstOrDefault();
+            if(user is not null)
+            {
+                user.ResetCode = Guid.NewGuid().ToString();
+                await repository.UpdateAsync(user);
+                var encodedResetCode = WebUtility.UrlEncode(user.ResetCode);
+
+                //Link creation//
+                var link = contextService.GetAppUrl() + "/users/resetPassword?resetCode=" + encodedResetCode;
+                //https://localhost:7119/api/resetPassword//
+                var temp = GetEmailTemplate().Replace("[LINKURL]", link);
+                emailService.SendEmailAsync(new MailSetting
+                {
+                    To = new List<string> { email },
+                    Subject = "Reset Password",
+                    Body = temp,
+
+                });
+                return ApiResponse<string>.SuccesResponse(default, "password changed successfully", StatusCode.OK);
+            }
+            return ApiResponse<string>.ErrorResponse("Cannot change password please try again", StatusCode.BadRequest);
+           
+
+          
+        }
+        private string GetEmailTemplate()                             //Read File
+        {
+            var template = Path.Combine("EmailTemplates");
+           return File.ReadAllText(Path.Combine(template, "ConfirmEmailWithUsername.html"));
+        }
+
+        public async Task<ApiResponse<string>> ResetPasword(string resetCode ,ResetPasswordRequest model)
+        {
+           var user = (await repository.FindByAsync(x => x.ResetCode == resetCode)).FirstOrDefault();
+            if(user is not null)
+            {
+                user.Password = AppEncryption.CreatePasswordHash(model.NewPassword, user.Salt);
+                user.ResetCode = "";
+                await repository.UpdateAsync(user);
+                return ApiResponse<string>.SuccesResponse(default,"Password changed Successfully", StatusCode.OK);
+            }
+            return ApiResponse<string>.ErrorResponse("Invalid or resetCode Expired");
+
         }
     }
 }

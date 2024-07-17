@@ -14,8 +14,10 @@ namespace HomeWebApp.Domain.Entities
 
         public string Email { get; set; }=null!;
 
+
         public string Salt { get; set; } = null!;
 
+        public string? ResetCode { get; set; }
         public string ConfirmationCode { get; set; } = string.Empty;
 
 

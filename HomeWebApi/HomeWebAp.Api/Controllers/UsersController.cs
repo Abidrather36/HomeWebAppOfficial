@@ -56,5 +56,19 @@ namespace HomeWebAp.Api.Controllers
         {
             return await service.Login(model);
         }
+
+        [HttpPost("[action]")]
+
+        public async Task<ApiResponse<string>> ForgotPassword(string email)
+        {
+            return await service.ForgetPassword(email);
+        }
+
+        [HttpGet("resetPassword")]
+
+        public async Task<ApiResponse<string>> resetPassword([FromQuery] string resetCode, [FromBody]ResetPasswordRequest model)
+        {
+           return  await service.ResetPasword(resetCode,model);
+        }
     }
 }

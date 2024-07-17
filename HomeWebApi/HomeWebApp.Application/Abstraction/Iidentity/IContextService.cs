@@ -8,7 +8,7 @@
 
         string GetEmail();
 
-
+        string GetAppUrl();
         
     }
 }

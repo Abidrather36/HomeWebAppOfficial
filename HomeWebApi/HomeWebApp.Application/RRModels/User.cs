@@ -95,11 +95,20 @@ namespace HomeWebApp.Application.RRModels
         public string? UserName { get; set; }
 
 
-       public string Email { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
 
 
         public string ContactNo { get; set; } = string.Empty;
 
 
     }
+
+    public class ResetPasswordRequest
+    {
+        public string? NewPassword { get; set; }
+
+        public string? ConfirmPassword { get; set; }
+
+        /*public string ResetCode { get; set; }*/
     }
+}

@@ -27,6 +27,10 @@ namespace HomeWebApp.Application.Abstraction.IServices
 
         Task<ApiResponse<string>> ChangePassword(ChangePasswordRequest model);
 
+        Task<ApiResponse<string>> ForgetPassword(string email);
+
+
+        Task<ApiResponse<string>> ResetPasword(string resetCode,ResetPasswordRequest model);
 
         Task<ApiResponse<LoginResponse>> Login(LoginRequest model);
     }

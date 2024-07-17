@@ -28,25 +28,53 @@ namespace HomeWebApp.Application.Utils
 
         public static string GenerateSalt()
         {
-            RNGCryptoServiceProvider rng = new();
+            /*RNGCryptoServiceProvider rng = new();
             byte[] salt = new byte[32];
             rng.GetBytes(salt);
-            return Convert.ToBase64String(salt);
+            return Convert.ToBase64String(salt);*/
+
+            var rng = RandomNumberGenerator.GetBytes(20);
+
+            return Convert.ToBase64String(rng);
 
         }
 
-        public static string CreatePasswordHash(string password ,string salt)
+        public static string CreatePasswordHash(string password, string salt)
         {
-            var saltedPassword=string.Concat(password, salt);
-            HMACSHA256 sha = new();
-            byte[] hash=sha.ComputeHash(Encoding.UTF8.GetBytes(saltedPassword));
+            var saltedPassword = string.Concat(password, salt);
+            var sha = SHA256.Create();
+            var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(saltedPassword));
 
-            return Convert.ToBase64String(hash);
+            return Convert.ToBase64String(bytes);
         }
 
-        public static bool ComparePassword(string dbPassword,string newPassword, string dbSalt)
+        public static bool ComparePassword(string dbPassword, string newPassword, string dbSalt)
         {
-            return dbPassword==CreatePasswordHash(newPassword,dbSalt);
-        } 
+            return dbPassword == CreatePasswordHash(newPassword, dbSalt);
+        }
+        /* public static string GenerateSalt()
+         {
+             using (var rng = new RNGCryptoServiceProvider())
+             {
+                 byte[] salt = new byte[32];
+                 rng.GetBytes(salt);
+                 return Convert.ToBase64String(salt);
+             }
+         }
+
+         public static string CreatePasswordHash(string password, string salt)
+         {
+             using (var sha = new HMACSHA256(Encoding.UTF8.GetBytes(salt)))
+             {
+                 byte[] hash = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
+                 return Convert.ToBase64String(hash);
+             }
+         }
+
+         public static bool ComparePassword(string dbPassword, string Password, string dbSalt)
+         {
+             return dbPassword == CreatePasswordHash(Password, dbSalt);
+         }*/
+
     }
 }
